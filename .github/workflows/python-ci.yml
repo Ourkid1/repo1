@@ -11,7 +11,7 @@ jobs:
 
     permissions:
       contents: read
-      packages: write  # allows pushing to GitHub Container Registry
+      packages: write  # required for pushing to GHCR
 
     steps:
       - name: Checkout code
@@ -34,7 +34,9 @@ jobs:
 
           IMAGE_NAME=ghcr.io/$OWNER_LOWER/flask-app
 
-          # Build image with two tags: latest and commit SHA
+          echo "Building image: $IMAGE_NAME"
           docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:$SHA_TAG .
 
-          # Push both tags
+          echo "Pushing image to GHCR..."
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:$SHA_TAG
