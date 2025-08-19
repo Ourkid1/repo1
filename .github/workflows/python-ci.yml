@@ -30,6 +30,11 @@ jobs:
       - name: Build and Push Docker Image to GHCR
         run: |
           OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME=ghcr.io/$OWNER_LOWER/flask-app:latest
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
+          SHA_TAG=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          IMAGE_NAME=ghcr.io/$OWNER_LOWER/flask-app
+
+          # Build image with two tags: latest and commit SHA
+          docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:$SHA_TAG .
+
+          # Push both tags
