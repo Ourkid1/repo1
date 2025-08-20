@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-# Make sure we can upload artifacts even on PRs
-permissions:
-  contents: read
-  packages: read
-  actions: write
-
 jobs:
   zap-scan:
     runs-on: ubuntu-latest
@@ -20,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Pull & run your app from GHCR; install missing dep then start Flask
+      # Run your Flask app from GHCR (hot-fix missing dotenv at runtime)
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -28,7 +22,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Flask app (install dotenv at runtime)
+      - name: Run Flask app
         run: |
           docker pull ghcr.io/ourkid1/flask-app:latest
           docker run -d --name flask -p 5000:5000 \
@@ -48,21 +42,23 @@ jobs:
           docker logs --tail 200 flask
           exit 1
 
-      # Allow ZAP to write files into the workspace
+      # Ensure ZAP can write reports into the workspace
       - name: Make workspace writable for ZAP
         run: chmod -R 777 "${{ github.workspace }}"
 
-      # Run ZAP Baseline but DON'T ask it to upload artifacts or open issues
-      - name: ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.10.0
-        with:
-          target: 'http://127.0.0.1:5000'
-          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
-          fail_action: false
-          allow_issue_writing: false
-          # (Intentionally NOT setting artifact_name)
+      # ✅ Run ZAP directly (same image the action used), no internal artifact upload
+      - name: ZAP Baseline (manual)
+        run: |
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+          docker run --network=host \
+            -v ${{ github.workspace }}:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://127.0.0.1:5000 \
+            -J /zap/wrk/report_json.json \
+            -w /zap/wrk/report_md.md \
+            -r /zap/wrk/report_html.html
 
-      # Upload reports ourselves to avoid the action's artifact upload error
+      # ✅ Upload the 3 report files ourselves (avoids the action's artifact error)
       - name: Upload ZAP reports
         uses: actions/upload-artifact@v4
         with:
