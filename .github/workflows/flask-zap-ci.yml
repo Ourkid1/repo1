@@ -17,25 +17,25 @@ jobs:
       - name: Create Docker Compose file
         run: |
           cat <<EOF > docker-compose.yml
-          version: '3'
-          services:
-            flask:
-              image: ghcr.io/ourkid1/flask-app:latest
-              ports:
-                - "5000:5000"
-            zap:
-              image: owasp/zap2docker-stable
-              command: >
-                zap-baseline.py -t http://flask:5000 -r zap-report.html
-              depends_on:
-                - flask
-              networks:
-                - zapnet
-              volumes:
-                - ./zap:/zap/wrk
-          networks:
-            zapnet:
-        EOF
+version: '3'
+services:
+  flask:
+    image: ghcr.io/ourkid1/flask-app:latest
+    ports:
+      - "5000:5000"
+  zap:
+    image: owasp/zap2docker-stable
+    command: >
+      zap-baseline.py -t http://flask:5000 -r zap-report.html
+    depends_on:
+      - flask
+    networks:
+      - zapnet
+    volumes:
+      - ./zap:/zap/wrk
+networks:
+  zapnet:
+EOF
 
       - name: Create output directory
         run: mkdir zap
