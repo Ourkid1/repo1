@@ -1,0 +1,38 @@
+name: Flask CI with ZAP Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t flask-app .
+
+      - name: Run Flask container
+        run: docker run -d -p 5000:5000 --name flask flask-app
+
+      - name: Wait for Flask to start
+        run: sleep 10
+
+      - name: Run OWASP ZAP baseline scan
+        run: |
+          docker run --network=host \
+            -v ${{ github.workspace }}:/zap/wrk/:rw \
+            owasp/zap2docker-stable zap-baseline.py \
+            -t http://localhost:5000 \
+            -g gen.conf -r zap-report.html
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap-report.html
