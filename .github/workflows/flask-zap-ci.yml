@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Run your Flask app from GHCR (hot-fix missing dotenv at runtime)
+      # Pull & run your Flask app from GHCR (hot-fix missing python-dotenv)
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -30,6 +30,7 @@ jobs:
             ghcr.io/ourkid1/flask-app:latest \
             sh -c "pip install --no-cache-dir python-dotenv && flask run --host=0.0.0.0 --port=5000"
 
+      # Wait until the app is actually reachable
       - name: Wait for app to be ready (max ~60s)
         run: |
           for i in {1..30}; do
@@ -46,19 +47,20 @@ jobs:
       - name: Make workspace writable for ZAP
         run: chmod -R 777 "${{ github.workspace }}"
 
-      # ✅ Run ZAP directly (same image the action used), no internal artifact upload
+      # Run ZAP Baseline (manual) and write reports into the workspace root
       - name: ZAP Baseline (manual)
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
           docker run --network=host \
             -v ${{ github.workspace }}:/zap/wrk \
+            -w /zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py -t http://127.0.0.1:5000 \
-            -J /zap/wrk/report_json.json \
-            -w /zap/wrk/report_md.md \
-            -r /zap/wrk/report_html.html
+            -J report_json.json \
+            -w report_md.md \
+            -r report_html.html
 
-      # ✅ Upload the 3 report files ourselves (avoids the action's artifact error)
+      # Upload the three report files
       - name: Upload ZAP reports
         uses: actions/upload-artifact@v4
         with:
@@ -67,3 +69,8 @@ jobs:
             report_html.html
             report_md.md
             report_json.json
+
+      # Always clean up the Flask container
+      - name: Stop Flask container
+        if: always()
+        run: docker rm -f flask || true
