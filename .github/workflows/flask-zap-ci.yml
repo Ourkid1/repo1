@@ -14,40 +14,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Pull and run Flask app
+      - name: Log in to GHCR (for your app container)
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: |
+      - name: Pull & Run Flask App
+        run: |
           docker pull ghcr.io/ourkid1/flask-app:latest
           docker run -d -p 5000:5000 --name flask ghcr.io/ourkid1/flask-app:latest
 
       - name: Wait for Flask to start
         run: sleep 10
 
-      - name: Download ZAP Standalone CLI
-        run: |
-          curl -sSL -o zap-cli.jar "https://github.com/zaproxy/zaproxy/releases/latest/download/ZAP_2_12_0_Jenkins.zip"
-          unzip -p ZAP_2_12_0_Jenkins.zip zap-*-jar-with-deps.jar > zap-cli.jar
-
-      - name: Build ZAP Docker Image
-        run: |
-          cat << 'EOF' > Dockerfile.zap
-          FROM openjdk:11-jre-slim
-          COPY zap-cli.jar /zap-cli.jar
-          ENTRYPOINT ["java", "-jar", "/zap-cli.jar"]
-          EOF
-          docker build -f Dockerfile.zap -t local-zap .
-
-      - name: Run ZAP scan using local image
+      - name: Run OWASP ZAP Baseline Scan
         run: |
           docker run --network=host \
-            -v ${{ github.workspace }}:/zap \
-            local-zap \
-            -cmd -quickurl http://localhost:5000 -quickout /zap/zap-report.html
+            -v ${{ github.workspace }}:/zap/wrk/:rw \
+            zaproxy/zap2docker-weekly \
+            zap-baseline.py -t http://localhost:5000 -r zap-report.html
 
       - name: Upload ZAP report
         uses: actions/upload-artifact@v4
