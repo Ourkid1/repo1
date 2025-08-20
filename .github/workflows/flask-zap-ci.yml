@@ -14,31 +14,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create Docker Compose file
+      - name: Write docker-compose.yml
         run: |
-          cat <<EOF > docker-compose.yml
-version: '3'
-services:
-  flask:
-    image: ghcr.io/ourkid1/flask-app:latest
-    ports:
-      - "5000:5000"
-  zap:
-    image: owasp/zap2docker-stable
-    command: >
-      zap-baseline.py -t http://flask:5000 -r zap-report.html
-    depends_on:
-      - flask
-    networks:
-      - zapnet
-    volumes:
-      - ./zap:/zap/wrk
-networks:
-  zapnet:
-EOF
+          echo 'version: "3"' > docker-compose.yml
+          echo 'services:' >> docker-compose.yml
+          echo '  flask:' >> docker-compose.yml
+          echo '    image: ghcr.io/ourkid1/flask-app:latest' >> docker-compose.yml
+          echo '    ports:' >> docker-compose.yml
+          echo '      - "5000:5000"' >> docker-compose.yml
+          echo '  zap:' >> docker-compose.yml
+          echo '    image: owasp/zap2docker-stable' >> docker-compose.yml
+          echo '    command: zap-baseline.py -t http://flask:5000 -r zap-report.html' >> docker-compose.yml
+          echo '    depends_on:' >> docker-compose.yml
+          echo '      - flask' >> docker-compose.yml
+          echo '    networks:' >> docker-compose.yml
+          echo '      - zapnet' >> docker-compose.yml
+          echo '    volumes:' >> docker-compose.yml
+          echo '      - ./zap:/zap/wrk' >> docker-compose.yml
+          echo 'networks:' >> docker-compose.yml
+          echo '  zapnet:' >> docker-compose.yml
 
-      - name: Create output directory
-        run: mkdir zap
+      - name: Create output folder for ZAP report
+        run: mkdir -p zap
 
       - name: Run ZAP Scan via Docker Compose
         run: docker compose up --abort-on-container-exit
