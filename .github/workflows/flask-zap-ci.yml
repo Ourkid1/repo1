@@ -1,20 +1,24 @@
-name: Security Scan with OWASP ZAP
+name: ZAP Scan (after Build)
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["Build & Push Docker Image to GHCR"]  # must match the build workflow's name exactly
+    types: [completed]
+  workflow_dispatch:                                   # optional: run manually and pass a tag
 
 jobs:
   zap-scan:
+    # run on manual, or when the build concluded successfully
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Pull & run your Flask app from GHCR (hot-fix missing python-dotenv)
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -22,16 +26,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Flask app
+      - name: Resolve image + tag to scan
         run: |
-          docker pull ghcr.io/ourkid1/flask-app:latest
+          echo "IMAGE=ghcr.io/${{ github.repository_owner }}/flask-app" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            SHA="${{ github.event.workflow_run.head_sha }}"
+            echo "TAG=${SHA::7}" >> $GITHUB_ENV
+          fi
+
+      - name: Run Flask app from built tag
+        run: |
+          docker pull "$IMAGE:$TAG"
           docker run -d --name flask -p 5000:5000 \
             -e FLASK_APP=app.py \
-            ghcr.io/ourkid1/flask-app:latest \
+            "$IMAGE:$TAG" \
             sh -c "pip install --no-cache-dir python-dotenv && flask run --host=0.0.0.0 --port=5000"
 
-      # Wait until the app is actually reachable
-      - name: Wait for app to be ready (max ~60s)
+      - name: Wait for app (max ~60s)
         run: |
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:5000/ >/dev/null; then
@@ -39,15 +52,12 @@ jobs:
             fi
             sleep 2
           done
-          echo "App not reachable, container logs follow:"
           docker logs --tail 200 flask
           exit 1
 
-      # Ensure ZAP can write reports into the workspace
       - name: Make workspace writable for ZAP
         run: chmod -R 777 "${{ github.workspace }}"
 
-      # Run ZAP Baseline and always continue (we'll gate on severity next)
       - name: ZAP Baseline (manual)
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
@@ -56,22 +66,16 @@ jobs:
             -w /zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py -t http://127.0.0.1:5000 \
-            -J report_json.json \
-            -w report_md.md \
-            -r report_html.html || true
+            -J report_json.json -w report_md.md -r report_html.html || true
 
-      # Ensure jq is available (usually preinstalled on ubuntu-latest)
       - name: Ensure jq
         run: |
           if ! command -v jq >/dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y jq
+            sudo apt-get update && sudo apt-get install -y jq
           fi
 
-      # Fail only if HIGH (riskcode >= 3) alerts exist
       - name: Fail only on HIGH ZAP alerts
         run: |
-          # riskcode: 0=Info, 1=Low, 2=Medium, 3=High
           if jq -e '[.site[].alerts[] | select((.riskcode|tonumber) >= 3)] | length > 0' report_json.json >/dev/null; then
             echo "High alerts detected. Failing the job."
             jq -r '.site[].alerts[] | select((.riskcode|tonumber) >= 3) | "\(.riskdesc // "High") - \(.alert) @ \(.instances[0].uri // "n/a")"' report_json.json || true
@@ -80,7 +84,6 @@ jobs:
             echo "No HIGH alerts."
           fi
 
-      # Upload the three report files
       - name: Upload ZAP reports
         uses: actions/upload-artifact@v4
         with:
@@ -90,7 +93,6 @@ jobs:
             report_md.md
             report_json.json
 
-      # Always clean up the Flask container
       - name: Stop Flask container
         if: always()
         run: docker rm -f flask || true
