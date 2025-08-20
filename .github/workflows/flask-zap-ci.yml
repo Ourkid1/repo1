@@ -47,7 +47,7 @@ jobs:
       - name: Make workspace writable for ZAP
         run: chmod -R 777 "${{ github.workspace }}"
 
-      # Run ZAP Baseline (manual) and write reports into the workspace root
+      # Run ZAP Baseline and always continue (we'll gate on severity in the next step)
       - name: ZAP Baseline (manual)
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
@@ -58,7 +58,19 @@ jobs:
             zap-baseline.py -t http://127.0.0.1:5000 \
             -J report_json.json \
             -w report_md.md \
-            -r report_html.html
+            -r report_html.html || true
+
+      # Optional: fail only if Medium/High (riskcode >= 2) alerts are present
+      - name: Fail if Medium/High ZAP alerts
+        run: |
+          # riskcode: 0=Informational, 1=Low, 2=Medium, 3=High
+          if jq -e '[.site[].alerts[] | select((.riskcode|tonumber) >= 2)] | length > 0' report_json.json >/dev/null; then
+            echo "Medium/High alerts detected. Failing the job."
+            jq -r '.site[].alerts[] | select((.riskcode|tonumber) >= 2) | "\(.risk) - \(.alert) @ \(.instances[0].uri // "n/a")"' report_json.json || true
+            exit 1
+          else
+            echo "No Medium/High alerts."
+          fi
 
       # Upload the three report files
       - name: Upload ZAP reports
