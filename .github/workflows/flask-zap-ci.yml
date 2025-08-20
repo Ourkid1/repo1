@@ -29,11 +29,11 @@ jobs:
       - name: Wait for Flask to be ready
         run: sleep 10
 
-      - name: Run OWASP ZAP scan (GHCR image)
+      - name: Run OWASP ZAP scan (from Docker Hub)
         run: |
           docker run --network=host \
             -v ${{ github.workspace }}:/zap \
-            ghcr.io/zaproxy/zaproxy \
+            owasp/zap2docker-weekly \
             zap.sh -cmd -quickurl http://localhost:5000 -quickout /zap/zap-report.html
 
       - name: Upload ZAP report
