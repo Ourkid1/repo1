@@ -1,4 +1,4 @@
-name: Security Scan with OWASP ZAP
+name: ZAP Scan with Docker Compose
 
 on:
   push:
@@ -11,34 +11,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Flask App
+      - name: Create Docker Compose file
         run: |
-          docker pull ghcr.io/ourkid1/flask-app:latest
-          docker run -d -p 5000:5000 --name flask ghcr.io/ourkid1/flask-app:latest
+          cat <<EOF > docker-compose.yml
+          version: '3'
+          services:
+            flask:
+              image: ghcr.io/ourkid1/flask-app:latest
+              ports:
+                - "5000:5000"
+            zap:
+              image: owasp/zap2docker-stable
+              command: >
+                zap-baseline.py -t http://flask:5000 -r zap-report.html
+              depends_on:
+                - flask
+              networks:
+                - zapnet
+              volumes:
+                - ./zap:/zap/wrk
+          networks:
+            zapnet:
+        EOF
 
-      - name: Wait for app to be ready
-        run: sleep 10
+      - name: Create output directory
+        run: mkdir zap
 
-      - name: Run ZAP Baseline Scan via GitHub Action
-        uses: zaproxy/action-baseline@v0.10.0
-        with:
-          target: 'http://localhost:5000'
-          allow_failures: true
-          format: 'HTML'
-          output_path: 'zap-report.html'
+      - name: Run ZAP Scan via Docker Compose
+        run: docker compose up --abort-on-container-exit
 
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
         with:
           name: zap-report
-          path: zap-report.html
+          path: zap/zap-report.html
