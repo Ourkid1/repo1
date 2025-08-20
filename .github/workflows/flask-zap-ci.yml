@@ -1,4 +1,4 @@
-name: Flask CI with ZAP Scan
+name: Security Scan with OWASP ZAP
 
 on:
   push:
@@ -7,27 +7,33 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  zap-scan:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t flask-app .
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Flask container
-        run: docker run -d -p 5000:5000 --name flask flask-app
+      - name: Pull and run prebuilt Flask app
+        run: |
+          docker pull ghcr.io/ourkid1/flask-app:latest
+          docker run -d -p 5000:5000 --name flask ghcr.io/ourkid1/flask-app:latest
 
-      - name: Wait for Flask to start
+      - name: Wait for Flask to be ready
         run: sleep 10
 
       - name: Run OWASP ZAP baseline scan
         run: |
           docker run --network=host \
             -v ${{ github.workspace }}:/zap/wrk/:rw \
-            owasp/zap2docker-stable zap-baseline.py \
+            owasp/zap2docker-weekly zap-baseline.py \
             -t http://localhost:5000 \
             -g gen.conf -r zap-report.html
 
