@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Pull & run your app from GHCR, overriding command to install missing dep then run Flask
+      # Pull & run your app from GHCR, install missing dep, then start Flask
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -30,7 +30,6 @@ jobs:
             ghcr.io/ourkid1/flask-app:latest \
             sh -c "pip install --no-cache-dir python-dotenv && flask run --host=0.0.0.0 --port=5000"
 
-      # Robust wait until the app is reachable
       - name: Wait for app to be ready (max ~60s)
         run: |
           for i in {1..30}; do
@@ -43,15 +42,16 @@ jobs:
           docker logs --tail 200 flask
           exit 1
 
-      # Let ZAP write its plan/report into the workspace
+      # Let ZAP write its files into the workspace (prevents permission errors)
       - name: Make workspace writable for ZAP
         run: chmod -R 777 "${{ github.workspace }}"
 
-      # Run the official ZAP Baseline Action (it pulls the right image internally)
+      # Run ZAP Baseline without trying to write a GitHub Issue
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.10.0
         with:
           target: 'http://127.0.0.1:5000'
-          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'  # action handles the container
-          fail_action: false                              # set to true to fail on alerts
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          fail_action: false                 # keep CI green even if alerts exist
+          allow_issue_writing: false         # <- prevents the "Resource not accessible" error
           artifact_name: 'zap-baseline-artifacts'
