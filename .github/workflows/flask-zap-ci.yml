@@ -21,13 +21,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull and run prebuilt Flask app
+      - name: Pull and run prebuilt Flask app from GHCR
         run: |
           docker pull ghcr.io/ourkid1/flask-app:latest
           docker run -d -p 5000:5000 --name flask ghcr.io/ourkid1/flask-app:latest
 
       - name: Wait for Flask to be ready
         run: sleep 10
+
+      - name: Docker Hub login (for ZAP image pull)
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Run OWASP ZAP baseline scan
         run: |
