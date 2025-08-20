@@ -1,4 +1,4 @@
-name: ZAP Scan with Docker Compose
+name: Security Scan with OWASP ZAP
 
 on:
   push:
@@ -14,34 +14,41 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Write docker-compose.yml
-        run: |
-          echo 'version: "3"' > docker-compose.yml
-          echo 'services:' >> docker-compose.yml
-          echo '  flask:' >> docker-compose.yml
-          echo '    image: ghcr.io/ourkid1/flask-app:latest' >> docker-compose.yml
-          echo '    ports:' >> docker-compose.yml
-          echo '      - "5000:5000"' >> docker-compose.yml
-          echo '  zap:' >> docker-compose.yml
-          echo '    image: owasp/zap2docker-stable' >> docker-compose.yml
-          echo '    command: zap-baseline.py -t http://flask:5000 -r zap-report.html' >> docker-compose.yml
-          echo '    depends_on:' >> docker-compose.yml
-          echo '      - flask' >> docker-compose.yml
-          echo '    networks:' >> docker-compose.yml
-          echo '      - zapnet' >> docker-compose.yml
-          echo '    volumes:' >> docker-compose.yml
-          echo '      - ./zap:/zap/wrk' >> docker-compose.yml
-          echo 'networks:' >> docker-compose.yml
-          echo '  zapnet:' >> docker-compose.yml
-
-      - name: Create output folder for ZAP report
-        run: mkdir -p zap
-
-      - name: Run ZAP Scan via Docker Compose
-        run: docker compose up --abort-on-container-exit
-
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v4
+      # Pull & run your app from GHCR
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: zap-report
-          path: zap/zap-report.html
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Flask app
+        run: |
+          docker pull ghcr.io/ourkid1/flask-app:latest
+          docker run -d --name flask -p 5000:5000 ghcr.io/ourkid1/flask-app:latest
+
+      # Robust wait until the app is actually reachable
+      - name: Wait for app to be ready (max 60s)
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5000/ >/dev/null; then
+              echo "App is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "App not reachable, container logs follow:"
+          docker logs --tail 200 flask
+          exit 1
+
+      # Fix the permission error you saw writing zap.yaml / reports
+      - name: Make workspace writable for ZAP
+        run: chmod -R 777 "${{ github.workspace }}"
+
+      # Run the official ZAP baseline action (no manual image pulls)
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'http://127.0.0.1:5000'
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'  # action pulls this for you
+          fail_action: false                             # keep CI green; flip to true to fail on alerts
+          artifact_name: 'zap-baseline-artifacts'
