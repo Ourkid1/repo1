@@ -29,16 +29,12 @@ jobs:
       - name: Wait for Flask to be ready
         run: sleep 10
 
-      - name: Docker Hub login (for ZAP image pull)
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Run OWASP ZAP baseline scan
+      - name: Run OWASP ZAP scan from GHCR
         run: |
           docker run --network=host \
             -v ${{ github.workspace }}:/zap/wrk/:rw \
-            owasp/zap2docker-weekly zap-baseline.py \
-            -t http://localhost:5000 \
-            -g gen.conf -r zap-report.html
+            ghcr.io/zaproxy/zaproxy \
+            zap.sh -daemon -cmd -quickurl http://localhost:5000 -quickout /zap/wrk/zap-report.html
 
       - name: Upload ZAP report
         uses: actions/upload-artifact@v4
