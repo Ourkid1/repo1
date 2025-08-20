@@ -21,6 +21,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub (for OWASP ZAP)
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Run Flask app
         run: |
           docker pull ghcr.io/ourkid1/flask-app:latest
@@ -29,11 +35,11 @@ jobs:
       - name: Wait for Flask to be ready
         run: sleep 10
 
-      - name: Run OWASP ZAP scan (using zap2docker-weekly)
+      - name: Run OWASP ZAP scan
         run: |
           docker run --network=host \
             -v ${{ github.workspace }}:/zap/wrk/:rw \
-            ghcr.io/zaproxy/zap2docker-weekly \
+            owasp/zap2docker-weekly \
             zap-baseline.py -t http://localhost:5000 -r zap-report.html
 
       - name: Upload ZAP report
