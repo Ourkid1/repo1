@@ -1,71 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='about_style.css') }}">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen font-sans">
 
-<!-- Main Content -->
-<h1>About page</h1>
-<!-- Your homepage content goes here -->
-
-<!-- Navigation Bar -->
-<div class="container">
-    <div class="navbar-header">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
+  <!-- Navigation Bar -->
+  <header class="bg-black text-white py-4 shadow">
+    <div class="container mx-auto flex flex-col md:flex-row justify-between items-center px-4 gap-4">
+      <h1 class="text-2xl font-bold tracking-wide">About page</h1>
+      <nav class="space-x-4">
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/">Home</a>
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/about">About</a>
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/contact">Contact</a>
+      </nav>
     </div>
-    <a class="navbar-brand" href="/">Home</a>
-    <a class="navbar-brand" href="/about">About</a>
-    <a class="navbar-brand" href="/contact">Contact</a>
-</div>
+  </header>
 
-<!-- Additional Content -->
-<h2>What we do...</h2>
-<p>A lot has changed in the past decade in the world of web design.</p>
-<p>
-    People started replacing desktops with laptops. The laptop screens
-    got wider then were replaced with tablets. Pixels became more and more abundant.
-    Screens then got smaller with smartphones and then bigger, much bigger with 50 inch
-    Internet-enabled TVs.
-</p>
-<p>
-    Then we had new browsers for smartphones. New desktop browsers like Chrome that
-    displays 25% larger than Internet Explorer or Edge. It got diverse, less vanilla.
-</p>
+  <!-- Main Content Wrapper -->
+  <main class="container mx-auto max-w-2xl mt-10 px-4">
+    <section class="bg-white rounded-xl shadow-lg p-8">
+      <h1 class="text-3xl font-bold mb-6 text-blue-700">About My Services</h1>
 
-<h2>How it's done...</h2>
-<p>
-    There are essentially two approaches to the problem. Building and maintaining two
-    websites, one for small screens such as a smartphone and one for larger screens such
-    as a large laptop or TV.
-</p>
-<p>
-    Obviously this is twice as much work and will cost twice as much.
-</p>
-<p>
-    The second solution is to have one website but to overlay a "mobile" style when
-    displayed on a smaller screen. This is what we do and provides an affordable
-    solution.
-</p>
+      <h2 class="text-xl font-semibold mt-6 mb-2">On-Call Tech Support You Can Rely On</h2>
+      <p class="text-gray-700 mb-4">
+        I'm a freelance on-call tech support professional, ready to assist individuals and small businesses
+        with everything from troubleshooting issues to setting up networks, devices, and software.
+      </p>
 
-<h2>What we offer...</h2>
+      <h2 class="text-xl font-semibold mt-6 mb-2">What I Can Help With:</h2>
+      <ul class="list-disc list-inside text-gray-700 mb-4 space-y-1">
+        <li>Virus and malware removal</li>
+        <li>Hardware and software troubleshooting</li>
+        <li>Printer and peripheral setup</li>
+        <li>Email and cloud configuration</li>
+        <li>Wi-Fi and home/office network setup</li>
+        <li>System upgrades and clean installations</li>
+      </ul>
 
-<p>
-    E-commerce: Online stores that allow users to browse, add items to a cart, and securely checkout with payment processing. (e.g., clothing stores, electronics stores)
-</p>
+      <h2 class="text-xl font-semibold mt-6 mb-2">Why Choose Me?</h2>
+      <p class="text-gray-700 mb-4">
+        I offer reliable, flexible, and affordable tech support without the hassle of subscriptions
+        or impersonal service. Whether it's remote help or an on-site visit, I work on your schedule
+        and speak your language — no tech jargon unless you want it.
+      </p>
 
-<p>
-    Dynamic Websites: Websites that personalize content based on user data or preferences, often powered by a database. (e.g., recommendation engines, personalized news feeds)
-</p>
+      <h2 class="text-xl font-semibold mt-6 mb-2">Availability</h2>
+      <p class="text-gray-700 mb-4">
+        I’m available evenings, weekends, and on short notice. Whether it's a one-time issue or ongoing support,
+        I'm just a message away.
+      </p>
 
-<p>
-Portfolio Websites: Websites for showcasing creative work, skills, and experience. (e.g., freelance designer portfolios, photography portfolios)
-</p>
+      <h2 class="text-xl font-semibold mt-6 mb-2">Let's Connect</h2>
+      <p class="text-gray-700">
+        Visit the <a href="/contact" class="text-blue-600 hover:underline">Contact</a> page to reach out or request a callback.
+        I look forward to helping you solve your tech headaches!
+      </p>
+    </section>
+  </main>
+
 </body>
 </html>
