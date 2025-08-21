@@ -5,82 +5,70 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
   <title>Home</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='home_style.css') }}">
+  <!-- Add Tailwind CSS via CDN for easy prototyping -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen font-sans">
 
-<h1>Home page</h1>
-<div class="cart">
-  <h2>Your Shopping Cart</h2>
-  <ul class="cart-items">
-  </ul>
-  <div class="cart-total">
-    <p>Total: $<span class="total-price">0.00</span></p>
-  </div>
-  <button class="checkout-btn">Checkout</button>
-</div>
+  <!-- Header -->
+  <header class="bg-black text-white py-4 shadow">
+    <div class="container mx-auto flex flex-col md:flex-row justify-between items-center px-4 gap-4">
+      <h1 class="text-2xl font-bold tracking-wide">Home page</h1>
+      <nav class="space-x-4">
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/">Home</a>
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/about">About</a>
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/contact">Contact</a>
+      </nav>
+    </div>
+  </header>
 
-<div class="container">
-  <div class="navbar-header">
-    <span class="icon-bar"></span>
-    <span class="icon-bar"></span>
-    <span class="icon-bar"></span>
-  </button>
-    <a class="navbar-brand" href="/">Home</a>
-    <a class="navbar-brand" href="/about">About</a>
-    <a class="navbar-brand" href="/contact">Contact</a>
-  </div>
+  <!-- Main Content -->
+  <main class="container mx-auto flex flex-col md:flex-row gap-8 mt-10 px-4">
+    <!-- Cart Section -->
+    <section class="flex-1 bg-white rounded-xl shadow-lg p-6 mb-8 md:mb-0">
+      <h2 class="text-xl font-semibold mb-4">Your Shopping Cart</h2>
+      <ul class="cart-items list-disc pl-5 text-gray-700"></ul>
+      <div class="cart-total flex items-center justify-between mt-4">
+        <span class="text-lg font-semibold">Total:</span>
+        <span class="total-price text-2xl font-bold">$0.00</span>
+      </div>
+      <button class="checkout-btn bg-black text-white rounded-md px-6 py-2 mt-6 font-semibold hover:bg-gray-900 transition">Checkout</button>
+    </section>
 
-  <div class="product">
-    <h3>Product Name</h3>
-    <p>Description of the product...</p>
-    <p>Price: $<span class="product-price">19.99</span></p>
-    <button class="add-to-cart-btn">Add to Cart</button>
-  </div>
-</div>
+    <!-- Product Section -->
+    <section class="flex-1 bg-white rounded-xl shadow-lg p-6">
+      <div class="product">
+        <h3 class="text-xl font-bold mb-2">Product Name</h3>
+        <p class="text-gray-700 mb-2">Description of the product...</p>
+        <p class="text-lg mb-4">Price: $<span class="product-price font-semibold">19.99</span></p>
+        <button class="add-to-cart-btn bg-blue-600 text-white rounded-md px-6 py-2 font-semibold hover:bg-blue-700 transition">Add to Cart</button>
+      </div>
+    </section>
+  </main>
 
-<script>
-  const cartItemsList = document.querySelector('.cart-items');
-  const totalPriceSpan = document.querySelector('.total-price');
-  const checkoutBtn = document.querySelector('.checkout-btn');
-  const addToCartBtn = document.querySelector('.add-to-cart-btn');
-  const productPriceSpan = document.querySelector('.product-price');
+  <script>
+    const cartItemsList = document.querySelector('.cart-items');
+    const totalPriceSpan = document.querySelector('.total-price');
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+    const productPriceSpan = document.querySelector('.product-price');
 
-  // Function to add item to cart
-  function addToCart() {
-    const itemName = 'Product Name';  // Replace with actual product name retrieved from data
-    const price = parseFloat(productPriceSpan.textContent);
+    function addToCart() {
+      const itemName = 'Product Name';
+      const price = parseFloat(productPriceSpan.textContent);
+      const listItem = document.createElement('li');
+      listItem.textContent = itemName + ' - $' + price.toFixed(2);
+      cartItemsList.appendChild(listItem);
+      // Update total, removing $ sign for parse
+      totalPriceSpan.textContent = '$' + (parseFloat(totalPriceSpan.textContent.replace('$', '')) + price).toFixed(2);
+      alert('"' + itemName + '" added to cart!');
+    }
 
-    // Check if item already exists in the cart (optional)
-    // You can add logic to prevent duplicate entries or update quantity
-    // let itemFound = false;
-    // for (const item of cartItemsList.children) {
-    //   if (item.textContent.includes(itemName)) {
-    //     itemFound = true;
-    //     break;
-    //   }
-    // }
+    addToCartBtn.addEventListener('click', addToCart);
 
-    // If item not found or you don't check for duplicates, add it to the list
-    // const listItem = document.createElement('li');
-    // listItem.textContent = itemName + ' - $' + price.toFixed(2);
-    // cartItemsList.appendChild(listItem);
-
-    // Update total price
-    totalPriceSpan.textContent = (parseFloat(totalPriceSpan.textContent) + price).toFixed(2);
-
-    // Optional: Display a message or update the UI to indicate adding to cart
-    alert('"' + itemName + '" added to cart!');
-  }
-
-  addToCartBtn.addEventListener('click', addToCart);
-
-  // Functionality for checkout button (replace with your checkout logic)
-  checkoutBtn.addEventListener('click', () => {
-    // Handle checkout process (e.g., redirect to checkout page)
-    alert('You are being redirected to checkout!');
-  });
-</script>
-
+    checkoutBtn.addEventListener('click', () => {
+      alert('You are being redirected to checkout!');
+    });
+  </script>
 </body>
 </html>
