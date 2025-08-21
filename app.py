@@ -1,55 +1,61 @@
+import os
 from flask import Flask, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
-from dotenv import load_dotenv
-import os
 
-load_dotenv()  # Load environment variables from .env file
-#===#
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
-app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://{os.environ['DATABASE_USERNAME']}" \
-                                          f":{os.environ['DATABASE_PASSWORD']}" \
-                                          f"@{os.environ['DATABASE_HOSTNAME']}" \
-                                          f"/{os.environ['DATABASE_NAME']}"
-app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
 
-db = SQLAlchemy(app)
+USE_DB = all([DB_USER, DB_PASS, DB_HOST, DB_NAME])
+
+db = SQLAlchemy(app)  # Set up, but may not be used if no DB
 
 class Comment(db.Model):
-
     __tablename__ = "comments"
-
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(4096))
+    content = db.Column(db.String(4096), nullable=False)
+
+if USE_DB:
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
+    db.init_app(app)
+else:
+    _inmem = []
 
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
-    if request.method == "GET":
-        try:
-            comments = Comment.query.all()
-            return render_template("contact.html", comments=comments)
-        except Exception as e:
-            print(f"Error fetching comments: {e}")
-            return "An error occurred while fetching comments."
+    if request.method == "POST":
+        text = (request.form.get("contents") or "").strip()
+        if text:
+            if USE_DB:
+                db.session.add(Comment(content=text))
+                db.session.commit()
+            else:
+                _inmem.append({"content": text})
+        return redirect(url_for("contact"))
 
-    comment = Comment(content=request.form["contents"])
-    db.session.add(comment)
-    db.session.commit()
-    return redirect(url_for('contact'))
+    comments = Comment.query.order_by(Comment.id.desc()).all() if USE_DB else list(reversed(_inmem))
+    return render_template("contact.html", comments=comments)
 
-# Home route
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('home.html')
+    return render_template("home.html")
 
-# About route
-@app.route('/about')
+@app.route("/about")
 def about():
-    return render_template('about.html')
+    return render_template("about.html")
 
-# Run the application
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+@app.route("/dbcheck")
+def dbcheck():
+    return ("OK:DB" if USE_DB else "OK:NO-DB"), 200
 
+if __name__ == "__main__":
+    if USE_DB:
+        with app.app_context():
+            db.create_all()
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=True)
