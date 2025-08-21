@@ -12,7 +12,7 @@ DB_NAME = os.getenv("DB_NAME")
 
 USE_DB = all([DB_USER, DB_PASS, DB_HOST, DB_NAME])
 
-db = SQLAlchemy(app)  # Set up, but may not be used if no DB
+db = SQLAlchemy()  # Do NOT pass app here
 
 class Comment(db.Model):
     __tablename__ = "comments"
