@@ -1,49 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='contact_style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen font-sans">
 
-<!-- Main Content -->
-<h1>Contact Page</h1>
-
-<!-- Navigation Bar -->
-<div class="container">
-    <div class="navbar-header">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
+  <!-- Header/Nav Bar -->
+  <header class="bg-black text-white py-4 shadow">
+    <div class="container mx-auto flex flex-col md:flex-row justify-between items-center px-4 gap-4">
+      <h1 class="text-2xl font-bold tracking-wide">Contact Page</h1>
+      <nav class="space-x-4">
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/">Home</a>
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/about">About</a>
+        <a class="navbar-brand text-white bg-blue-600 px-4 py-2 rounded-md font-semibold shadow hover:bg-blue-700 transition" href="/contact">Contact</a>
+      </nav>
     </div>
-    <a class="navbar-brand" href="/">Home</a>
-    <a class="navbar-brand" href="/about">About</a>
-    <a class="navbar-brand" href="/contact">Contact</a>
-</div>
+  </header>
 
-<!-- Comment Form -->
-<div class="container1">
-    {% for comment in comments %}
-        <div class="row">
-            {{ comment.content }}
-        </div>
-    {% endfor %}
+  <!-- Main Content Card -->
+  <main class="container mx-auto max-w-2xl mt-10 px-4">
+    <section class="bg-white rounded-xl shadow-lg p-8">
+      <h2 class="text-2xl font-bold mb-6 text-blue-700">Comments</h2>
+      
+      <!-- Comments List -->
+      <div class="space-y-4 mb-8">
+        {% for comment in comments %}
+          <div class="bg-gray-100 rounded-lg p-3 shadow-sm text-gray-800">{{ comment.content }}</div>
+        {% endfor %}
+      </div>
 
-    <div class="row">
-        <p>This is a MySQL-powered comment system for real-time user engagement and persistent data storage</p>
-        <form action="/contact" method="POST">
-            <textarea class="form-control" name="contents" placeholder="Enter a comment"></textarea>
-            <input type="submit" class="btn btn-success" value="Post comment">
-        </form>
-    </div>
-</div>
-
-<!-- Optional Cart Item Section -->
-<div class="cart-item">
-    <!-- Your content goes here -->
-</div>
+      <p class="text-gray-700 mb-4">
+        This is a MySQL-powered comment system for real-time user engagement and persistent data storage.
+      </p>
+      
+      <!-- Comment Form -->
+      <form action="/contact" method="POST" class="space-y-4">
+        <textarea 
+          class="form-control w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          name="contents"
+          rows="3"
+          placeholder="Enter a comment"
+          required
+        ></textarea>
+        <input 
+          type="submit"
+          class="btn bg-blue-600 text-white rounded-md px-6 py-2 font-semibold shadow hover:bg-blue-700 transition cursor-pointer"
+          value="Post comment"
+        >
+      </form>
+    </section>
+  </main>
 
 </body>
 </html>
