@@ -2,10 +2,11 @@ import os
 from flask import Flask, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from prometheus_flask_exporter import PrometheusMetrics
-metrics = PrometheusMetrics(app)   # exposes /metrics
+
 
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)   # exposes /metrics
 app.config["DEBUG"] = True
 
 DB_USER = os.getenv("DB_USER")
@@ -62,4 +63,5 @@ if __name__ == "__main__":
         with app.app_context():
             db.create_all()
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=True)
+
 
