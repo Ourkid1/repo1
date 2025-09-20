@@ -1,0 +1,145 @@
+body
+
+{
+ /*  background-color: rgb(204, 204, 204); */
+  font-family: "Calibri", "Verdana", "Arial";
+  width: 100%;
+  overflow-x: hidden; /* Set overflow-x to hidden */
+  overflow-y: scroll; /* Set overflow-y to scroll */
+  background-size: contain;
+ -webkit-background-size: contain; /* Vendor prefix for WebKit browsers */
+}
+
+
+.container {
+  background-color: rgb(1, 0, 0);
+  width: 100%;  /* Maintains full width */
+  margin: 0 auto;  /* Centers the container horizontally */
+  margin-bottom: 0.5em;
+
+
+}
+
+
+.container {
+  background-color: rgb(1, 0, 0);
+  width: 100%;  /* Maintains full width */
+  margin: 0 auto;  /* Centers the container horizontally */
+  margin-bottom: 0.5em;
+
+
+}
+
+.navbar-brand {
+  border-radius: 4px;
+  background-color: #5ca1e1;
+  border: none;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  padding: 10px;
+  width: 70px;
+  transition: all 0.5s;
+  cursor: pointer;
+  margin: 16px;
+  box-shadow: 0 10px 20px -8px rgba(0, 0, 0,.7);
+}
+
+.navbar-brand {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+.navbar-brand:after {
+  content: '»';
+  position: absolute;
+  opacity: 0;
+  top: 14px;
+  right: -20px;
+  transition: 0.5s;
+}
+
+.navbar-brand:hover {
+  padding-right: 24px;
+  padding-left:8px;
+}
+
+.navbar-brand:hover:after {
+  opacity: 1;
+  right: 10px;
+}
+
+.cart-item {
+   border: 1px solid #ddd;
+   padding: 10px;
+   margin-bottom: 10px;
+}
+
+.cart-header {
+   border-bottom: 1px solid #ddd;
+   padding-bottom: 5px;
+   margin-bottom: 10px;
+}
+
+.product-details {
+   /* Styling for product details */
+   /* Додайте ваші стилі тут */
+}
+
+.counter {
+   display: flex;
+   align-items: center;
+}
+
+.counter button {
+   padding: 5px;
+}
+
+.counter span {
+   margin: 0 10px;
+}
+
+
+
+.price-section {
+   /* Styling for price section */
+   font-size: 16px;
+   color: #333;
+   margin-top: 10px; /* Додано відступ зверху для кращого розташування */
+}
+
+.checkout-section {
+   border-top: 1px solid #ddd;
+   padding-top: 10px;
+}
+
+.checkout-section button {
+   padding: 10px 20px;
+   background-color: #4CAF50; /* Зелений колір, можна змінити */
+   color: white;
+   border: none;
+   cursor: pointer;
+}
+
+
+
+
+
+.container1.row  {
+
+
+
+}
+
+
+.form-control {
+
+
+
+
+}
+
+
+

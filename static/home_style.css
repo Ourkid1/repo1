@@ -1,0 +1,64 @@
+body
+
+{
+  background-color: rgb(255,255,255);
+  font-family: "Calibri", "Verdana", "Arial";
+  width: 100%;
+  overflow-x: hidden; /* Set overflow-x to hidden */
+  overflow-y: scroll; /* Set overflow-y to scroll */
+  background-size: contain;
+ -webkit-background-size: contain; /* Vendor prefix for WebKit browsers */
+}
+
+
+.container {
+  background-color: rgb(1, 0, 0);
+  width: 100%;  /* Maintains full width */
+  margin: 0 auto;  /* Centers the container horizontally */
+  margin-bottom: 0.5em;
+
+}
+
+.navbar-brand {
+  border-radius: 4px;
+  background-color: #5ca1e1;
+  border: none;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  padding: 10px;
+  width: 70px;
+  transition: all 0.5s;
+  cursor: pointer;
+  margin: 16px;
+  box-shadow: 0 10px 20px -8px rgba(0, 0, 0,.7);
+}
+
+.navbar-brand {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+.navbar-brand:after {
+  content: '»';
+  position: absolute;
+  opacity: 0;
+  top: 14px;
+  right: -20px;
+  transition: 0.5s;
+}
+
+.navbar-brand:hover {
+  padding-right: 24px;
+  padding-left:8px;
+}
+
+.navbar-brand:hover:after {
+  opacity: 1;
+  right: 10px;
+}
+
+
+
