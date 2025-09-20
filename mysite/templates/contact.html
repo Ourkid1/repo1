@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, 'Apple Color Emoji', 'Segoe UI Emoji'; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-900">
+
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-black text-white px-3 py-2 rounded">Skip to content</a>
+
+  <header class="bg-black text-white py-4 sticky top-0 z-50 shadow">
+    <div class="container mx-auto flex flex-col md:flex-row justify-between items-center px-4 gap-4">
+      <a href="/" class="flex items-center gap-2">
+        <span class="text-2xl font-extrabold tracking-tight">Smart Picks</span>
+      </a>
+      <nav class="flex flex-wrap gap-2">
+        <a class="text-white/90 hover:text-white px-4 py-2 rounded-md font-semibold transition" href="/">Home</a>
+        <a class="text-white/90 hover:text-white px-4 py-2 rounded-md font-semibold transition" href="/picks">Picks</a>
+        <a class="text-white px-4 py-2 rounded-md font-semibold transition bg-white/10" href="/contact" aria-current="page">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container mx-auto max-w-2xl px-4 pt-24 pb-16">
+    <section class="bg-white rounded-xl shadow-lg p-8">
+      <h1 class="text-3xl font-bold mb-2">Contact</h1>
+      <p class="text-gray-700 mb-6">Send a <span class="font-semibold">Suggestion</span> (product/brand to review) or a <span class="font-semibold">Message</span>. Stored in MySQL so I can triage in Grafana.</p>
+
+      {% if request.args.get('sent') == '1' %}
+        <div class="mb-6 rounded-lg bg-green-50 text-green-800 p-3">Thanks—saved.</div>
+      {% elif error %}
+        <div class="mb-6 rounded-lg bg-red-50 text-red-800 p-3">{{ error }}</div>
+      {% endif %}
+
+      <form action="/contact" method="POST" class="space-y-4" novalidate>
+        <!-- Honeypot -->
+        <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+          <label for="website">Leave this field empty</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <fieldset>
+          <legend class="block text-sm font-medium text-gray-800 mb-2">Type</legend>
+          <div class="flex gap-6 text-sm">
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" name="kind" value="suggestion" checked class="h-4 w-4">
+              <span>Suggestion</span>
+            </label>
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" name="kind" value="message" class="h-4 w-4">
+              <span>Message</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div>
+          <label for="comment" class="block text-sm font-medium text-gray-800 mb-1">Your text</label>
+          <textarea
+            id="comment"
+            class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            name="contents" rows="5" placeholder="e.g., ‘Anker 735 GaN charger—worth a review?’ or any message"
+            maxlength="2000" aria-describedby="comment-help comment-count" required></textarea>
+          <div class="mt-1 flex items-center justify-between text-xs text-gray-500">
+            <span id="comment-help">No personal/sensitive info. Max 2000 characters.</span>
+            <span id="comment-count">0/2000</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <input type="submit" class="bg-black text-white rounded-md px-6 py-2 font-semibold shadow hover:bg-gray-900 transition cursor-pointer" value="Save"/>
+          <p class="text-xs text-gray-500">Your entry appears in my internal dashboard.</p>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="border-t bg-white">
+    <div class="container mx-auto px-4 py-8 text-sm text-gray-600">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <p>© <span id="y"></span> Smart Picks. All rights reserved.</p>
+        <nav class="flex flex-wrap gap-4">
+          <a href="/picks" class="hover:underline">Picks</a>
+          <a href="/contact" class="hover:underline" aria-current="page">Contact</a>
+          <a href="/privacy" class="hover:underline">Privacy</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+    (function () {
+      const ta = document.getElementById('comment');
+      const counter = document.getElementById('comment-count');
+      if (!ta || !counter) return;
+      const max = parseInt(ta.getAttribute('maxlength') || '2000', 10);
+      const update = () => { counter.textContent = (ta.value.length) + '/' + max; };
+      ta.addEventListener('input', update);
+      update();
+    })();
+  </script>
+</body>
+</html>
