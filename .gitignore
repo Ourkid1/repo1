@@ -1,2 +1,6 @@
+# Ignore private SSH keys
 mysite/jackskey
 mysite/jackskey.pub
+
+# Build and Release Folders
+.env

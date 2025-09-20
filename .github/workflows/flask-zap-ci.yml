@@ -1,0 +1,116 @@
+name: ZAP Scan (after Build)
+
+on:
+  workflow_run:
+    workflows: ["Build & Push Docker Image to GHCR"]  # must match your build workflow name exactly
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to scan (e.g. latest or short SHA)"
+        required: false
+        default: ""
+
+jobs:
+  zap-scan:
+    # Run if manually triggered OR the build workflow concluded successfully
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve image + tag to scan (force lowercase owner)
+        env:
+          OWNER: ${{ github.repository_owner }}
+          INPUT_TAG: ${{ inputs.tag }}
+          BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
+          CUR_SHA: ${{ github.sha }}
+        run: |
+          OWNER_LC="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE=ghcr.io/${OWNER_LC}/flask-app" >> $GITHUB_ENV
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          elif [ -n "$BUILD_SHA" ]; then
+            TAG="${BUILD_SHA:0:7}"
+          else
+            TAG="${CUR_SHA:0:7}"
+          fi
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "Will scan image: $IMAGE:$TAG"
+
+      - name: Run Flask app from built tag
+        run: |
+          docker pull "$IMAGE:$TAG"
+          docker run -d --name flask -p 5000:5000 \
+            -e FLASK_APP=app.py \
+            "$IMAGE:$TAG" \
+            sh -c "pip install --no-cache-dir python-dotenv && flask run --host=0.0.0.0 --port=5000"
+
+      - name: Wait for app (max ~60s)
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5000/ >/dev/null; then
+              echo "App is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "App not reachable, container logs:"
+          docker logs --tail 200 flask
+          exit 1
+
+      - name: Make workspace writable for ZAP
+        run: chmod -R 777 "${{ github.workspace }}"
+
+      - name: ZAP Baseline (stable)
+        run: |
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+          docker run --network=host \
+            -v "${{ github.workspace }}:/zap/wrk" \
+            -w /zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://127.0.0.1:5000 \
+            -J report_json.json -w report_md.md -r report_html.html || true
+
+      - name: Ensure jq
+        run: |
+          if ! command -v jq >/dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+      - name: Fail only on HIGH ZAP alerts
+        run: |
+          # riskcode: 0=Info, 1=Low, 2=Medium, 3=High
+          if jq -e '[.site[].alerts[] | select((.riskcode|tonumber) >= 3)] | length > 0' report_json.json >/dev/null; then
+            echo "High alerts detected. Failing the job."
+            jq -r '.site[].alerts[] | select((.riskcode|tonumber) >= 3) | "\(.riskdesc // "High") - \(.alert) @ \(.instances[0].uri // "n/a")"' report_json.json || true
+            exit 1
+          else
+            echo "No HIGH alerts."
+          fi
+
+      - name: Upload ZAP reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
+
+      - name: Stop Flask container
+        if: always()
+        run: docker rm -f flask || true
